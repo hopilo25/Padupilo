@@ -1,0 +1,38 @@
+name: Build Padupilo (Windows)
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Tes
+        run: cargo test --lib --release
+      - name: Build
+        run: cargo build --release
+      - name: Kemas folder portable
+        shell: pwsh
+        run: |
+          $d = "Padupilo"
+          New-Item -ItemType Directory -Force $d, "$d/bin", "$d/model", "$d/kamus", "$d/proyek", "$d/hasil" | Out-Null
+          Copy-Item target/release/Padupilo.exe $d/
+          Copy-Item PANDUAN.md $d/
+          Copy-Item font/OFL-Montserrat.txt $d/
+          foreach ($sub in "bin","model","kamus","proyek","hasil") { New-Item -ItemType File "$d/$sub/.simpan" | Out-Null }
+          Compress-Archive -Path $d -DestinationPath Padupilo-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Padupilo-windows
+          path: Padupilo-windows.zip
+      - name: Rilis (bila tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Padupilo-windows.zip

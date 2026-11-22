@@ -85,9 +85,50 @@ pub fn transcribe(tools: &Tools, clip: &Path, lang: &str, work_dir: &Path) -> Re
     parse_whisper_json(&text)
 }
 
+/// Gabungkan kata jadi teks yang bisa diedit (satu klip).
+pub fn words_to_text(words: &[Word]) -> String {
+    words.iter().map(|w| w.text.as_str()).collect::<Vec<_>>().join(" ")
+}
+
+/// Terapkan teks hasil edit. Jumlah kata sama: waktu tiap kata dipertahankan.
+/// Berbeda: waktu dibagi ulang menurut panjang huruf dalam rentang klip yang sama.
+pub fn retext(original: &[Word], text: &str) -> Vec<Word> {
+    let tokens: Vec<&str> = text.split_whitespace().collect();
+    if tokens.len() == original.len() {
+        return original.iter().zip(tokens).map(|(w, t)| Word { text: t.to_string(), ..w.clone() }).collect();
+    }
+    let (Some(first), Some(last)) = (original.first(), original.last()) else { return vec![] };
+    let (s, e) = (first.start, last.end);
+    let total: usize = tokens.iter().map(|t| t.chars().count()).sum::<usize>().max(1);
+    let mut t = s;
+    tokens
+        .iter()
+        .map(|tok| {
+            let d = (e - s) * tok.chars().count() as f64 / total as f64;
+            let w = Word { text: tok.to_string(), start: t, end: t + d };
+            t += d;
+            w
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn retext_keeps_or_redistributes_times() {
+        let orig = vec![
+            Word { text: "halaman".into(), start: 1.0, end: 1.5 },
+            Word { text: "FVP".into(), start: 1.5, end: 2.0 },
+        ];
+        let same = retext(&orig, "halaman FYP,");
+        assert_eq!(same[1], Word { text: "FYP,".into(), start: 1.5, end: 2.0 });
+        let more = retext(&orig, "hal aman FYP");
+        assert_eq!(more.len(), 3);
+        assert!((more[0].start - 1.0).abs() < 1e-9 && (more[2].end - 2.0).abs() < 1e-9);
+        assert!(retext(&orig, "   ").is_empty());
+    }
 
     #[test]
     fn parses_word_segments() {
