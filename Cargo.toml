@@ -1,6 +1,6 @@
 [package]
 name = "padupilo"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "hopilo Padupilo - satukan video, klip suara, dan subtitle animasi"
 

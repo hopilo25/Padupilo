@@ -160,7 +160,7 @@ impl App {
                 self.preview_t = self.preview_t.min(info.duration);
                 self.detect_scenes(ctx);
             }
-            Err(e) => self.error(format!("Video tidak bisa dibuka: {e}")),
+            Err(e) => self.error(format!("Video tidak bisa dibuka: {e:#}")),
         }
     }
 
@@ -169,7 +169,7 @@ impl App {
         let (tools, th) = (self.tools.clone(), self.project.scene_threshold);
         self.job = Some(Job::spawn("Mendeteksi pergantian adegan", ctx.clone(), move |_, _| match media::detect_scenes(&tools, &video, th) {
             Ok(s) => JobResult::Scenes(s),
-            Err(e) => JobResult::Failed(format!("Deteksi adegan gagal: {e}")),
+            Err(e) => JobResult::Failed(format!("Deteksi adegan gagal: {e:#}")),
         }));
     }
 
@@ -270,7 +270,7 @@ impl App {
         let path = self.base.join("kamus").join("koreksi.json");
         match self.dict.save(&path) {
             Ok(_) => self.info(format!("{learned} koreksi disimpan ke kamus.")),
-            Err(e) => self.error(format!("Kamus gagal disimpan: {e}")),
+            Err(e) => self.error(format!("Kamus gagal disimpan: {e:#}")),
         }
     }
 
@@ -304,7 +304,7 @@ impl App {
         let tools = self.tools.clone();
         self.job = Some(Job::spawn("Ekspor", ctx.clone(), move |report, cancel| match run_export(&tools, &job, report, cancel) {
             Ok(_) => JobResult::Exported(out),
-            Err(e) => JobResult::Failed(e.to_string()),
+            Err(e) => JobResult::Failed(format!("{e:#}")),
         }));
     }
 
@@ -312,7 +312,7 @@ impl App {
         let base = self.base.clone();
         self.job = Some(Job::spawn("Unduh komponen", ctx.clone(), move |report, _| match padupilo::setup::download_components(&base, report) {
             Ok(_) => JobResult::Downloaded,
-            Err(e) => JobResult::Failed(format!("Unduhan gagal: {e}")),
+            Err(e) => JobResult::Failed(format!("Unduhan gagal (rincian juga disimpan di log-unduhan.txt):\n{e:#}")),
         }));
     }
 
@@ -332,7 +332,7 @@ impl App {
                     self.info(format!("Proyek disimpan: {}", p.display()));
                     self.project_path = Some(p);
                 }
-                Err(e) => self.error(format!("Gagal menyimpan: {e}")),
+                Err(e) => self.error(format!("Gagal menyimpan: {e:#}")),
             }
         }
     }
@@ -363,7 +363,7 @@ impl App {
                 self.frame = None;
                 let _ = ctx;
             }
-            Err(e) => self.error(format!("Proyek tidak bisa dibuka: {e}")),
+            Err(e) => self.error(format!("Proyek tidak bisa dibuka: {e:#}")),
         }
     }
 
