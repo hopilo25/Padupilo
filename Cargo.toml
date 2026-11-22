@@ -1,0 +1,29 @@
+[package]
+name = "padupilo"
+version = "0.1.0"
+edition = "2021"
+description = "hopilo Padupilo - satukan video, klip suara, dan subtitle animasi"
+
+[lib]
+name = "padupilo"
+path = "src/lib.rs"
+
+[[bin]]
+name = "Padupilo"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ab_glyph = "0.2"
+tiny-skia = "0.11"
+eframe = { version = "0.37", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
+rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "async-std"] }
+ureq = "3"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true
